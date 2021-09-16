@@ -20,3 +20,5 @@ filter_GOI<- function(df, column_to_keep = "Gene", threshold = 1) {
 
 GOI_FUR_1[,c('Gene','bnum')]
 test=filter_GOI(GOI_FUR_1,c('Gene','bnum'))
+
+Regarder upset plot pour voir les intersections entre gene impliques méto fer / resistance / dypiridil / snRNA
