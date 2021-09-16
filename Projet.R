@@ -1,19 +1,37 @@
-# Load the raw data
-DATA <- read.delim("./P_EXPR_antiobios.txt")
+################################################################################
+#          E. C O L I   A N T I B I O T I C S   R E S I S T A N C E            #
+#                                                                              #
+# > September 2021                                                             #
+# @ COLAJANNI Antonin                                                          #
+# @ ASLOUDJ Yanis                                                              #
+################################################################################
 
-# Load the desired Genes
-Desired_genes <- read.delim("GOI.txt", header = F)
+# I. Select the genes of interest by using multiple data files :
 
-# Convert the object into a vector
-Desired_genes = as.vector(Desired_genes[[1]])
-
-# Filter the data with the wanted genes
-# tolower() function to ensure that there is no case error
-Filtered_data = subset(DATA, tolower(DATA$IDENTIFIER) %in% tolower(Desired_genes) )
-
-# Gene ID that are in the Desired_Genes but not in DATA
-Not_in_DATA = unique(Desired_genes[!Desired_genes %in% DATA$IDENTIFIER] )
-
+  # a. the known genes contributing to the antibiotics resistance :
+  resi_genes <- read.delim("GOI.txt", header = F)
+  # b. the genes producing sRNA :
+  srna_genes <- read.delim("sRNA_list_coli.txt", header = T)
+  # c. the genes over- or under- expressed in the iron & dipyridil metabolism :
+  iron_genes <- read.delim("GOI_FUR_1.txt", header = T)
+  expr_iron_genes <- filter_GOI(iron_genes, threshold = 1)
+  dipy_genes <- read.delim("GOI_FUR_2.txt", header = T)
+  expr_dipy_genes <- filter_GOI(dipy_genes, threshold = 1)
+  # d. group the genes to get all the genes of interest :
+  inter_genes = unique(c(resi_genes$V1, 
+                            srna_genes$sRNA, 
+                            expr_iron_genes, 
+                            expr_dipy_genes))
+  # 
+  
+# II. Filter the genes expression table using the genes of interest :
+  raw_genes_expr <- read.delim("./P_EXPR_antiobios.txt")
+  inter_genes_expr <- subset(raw_genes_expr,
+                             tolower(raw_genes_expr$IDENTIFIER) %in% 
+                               tolower(inter_genes))
+  
+# III. 
+  
 # change the format of the dataframe
 row.names(Filtered_data) = Filtered_data$IDENTIFIER
 # Remove the identifiers columns
