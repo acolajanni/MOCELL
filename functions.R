@@ -1,3 +1,14 @@
+################################################################################
+#          E. C O L I   A N T I B I O T I C S   R E S I S T A N C E            #
+#                                                                              #
+# > September 2021                                                             #                                                
+# > Script : functions.R                                                       #                                                        
+# > Fonction : Fonctions permettant la réalisation du projet                   #                                                        
+# @ COLAJANNI Antonin                                                          #
+# @ ASLOUDJ Yanis                                                              #
+################################################################################
+
+
 #' Filtering Gene of Interest in a Dataframe
 #'
 #' @param df Dataframe that summarise
