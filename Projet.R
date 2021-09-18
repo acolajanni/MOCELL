@@ -1,7 +1,9 @@
 ################################################################################
 #          E. C O L I   A N T I B I O T I C S   R E S I S T A N C E            #
 #                                                                              #
-# > September 2021                                                             #
+# > September 2021                                                             #                                                
+# > Script : projet.R                                                          #                                                        
+# > Fonctions "main.R"                                                         #                                                        
 # @ COLAJANNI Antonin                                                          #
 # @ ASLOUDJ Yanis                                                              #
 ################################################################################
