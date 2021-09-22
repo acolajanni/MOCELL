@@ -12,38 +12,88 @@
 
   # a. the known genes contributing to the antibiotics resistance :
   resi_genes <- read.delim("GOI.txt", header = F)
+  resi_genes <- as.vector(unique(resi_genes$V1))
   # b. the genes producing sRNA :
   srna_genes <- read.delim("sRNA_list_coli.txt", header = T)
-  # c. the genes over- or under- expressed in the iron & dipyridil metabolism :
+  srna_genes <- as.vector(unique(srna_genes$sRNA))
+  # c. the genes that produces transcription factors
+  tf_genes <- read.delim("./P_TF_LABEL_COLI.txt")
+  tf_genes <- as.vector(unique(tf_genes$TF))
+  # d. the genes over- or under- expressed in the iron & dipyridil metabolism :
   iron_genes <- read.delim("GOI_FUR_1.txt", header = T)
   expr_iron_genes <- filter_GOI(iron_genes, threshold = 1)
   dipy_genes <- read.delim("GOI_FUR_2.txt", header = T)
   expr_dipy_genes <- filter_GOI(dipy_genes, threshold = 1)
-  # d. group the genes to get all the genes of interest :
-  inter_genes = unique(c(resi_genes$V1, 
-                            srna_genes$sRNA, 
-                            expr_iron_genes, 
-                            expr_dipy_genes))
+  # e. group the genes to get all the genes of interest :
+  inter_genes = unique(c(resi_genes,
+                         srna_genes,
+                         tf_genes,
+                         expr_iron_genes, 
+                         expr_dipy_genes))
   # 
+  
+  # f. visualize the intersection between the family of genes
+  inter_genes_list = list(
+    Resistance = resi_genes,
+    sRNA = srna_genes,
+    TF = tf_genes,
+    Iron = expr_iron_genes, 
+    Dipyridil = expr_dipy_genes  )
+  
+  upset(fromList(inter_genes_list), 
+        sets.bar.color = "#56B4E9", 
+        order.by = "freq", 
+        text.scale = 1.5,
+        #mb.ratio = c(0.65,0.35),
+        #empty.intersections = "on"
+        )
   
 # II. Filter the genes expression table using the genes of interest :
   raw_genes_expr <- read.delim("./P_EXPR_antiobios.txt")
   inter_genes_expr <- subset(raw_genes_expr,
                              tolower(raw_genes_expr$IDENTIFIER) %in% 
                                tolower(inter_genes))
+
+# III. Find the correlation on expression data
   
-# III. 
-  
-# change the format of the dataframe
-row.names(Filtered_data) = Filtered_data$IDENTIFIER
-# Remove the identifiers columns
-Filtered_data = Filtered_data[-c(1,2)]
-hist(Filtered_data)
+  # a. change the format of the dataframe
+  row.names(inter_genes_expr) = inter_genes_expr$IDENTIFIER
+  # Remove the identifiers columns
+  Filtered_data = inter_genes_expr[-c(1,2)]
 
 
-# compute the pearson correlations
-Corelations = cor(t(Filtered_data))
-Corelations_Spearman = cor(t(Filtered_data), method = "spearman")
+  # b. compute the pearson correlations to obtain a square matrix
+  corelations = cor(t(Filtered_data), method = "spearman")
+  
+  # c. transform the square matrix into a 3-column dataframe
+  library(reshape2)
+  list_correlation=melt(corelations)    
+  
+  # d. change the names of the columns
+  colnames(list_correlation) = c("Gene1","Gene2","values")
+  
+  # e. visualize pearson's rho distribution 
+  hist(list_correlation$values)
+  
+  # f. remove the redundant information
+  filter = as.character(list_correlation[,1])<as.character(list_correlation[,2])
+  table = list_correlation[filter,]
+  hist(table$values)
+  
+  # g. filtering gene association by absolute value of pearson's rho (-0.8 or 0.8)
+  network = filter_correlation(table, threshold = 0.8)
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 #------------------------------------------------
 # test Pvalues + Correlations
