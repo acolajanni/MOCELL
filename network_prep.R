@@ -12,11 +12,13 @@
 
 library(UpSetR)
 library(reshape2)
+library(stringi)
+library(ggvenn)
 
 
 ### F U N C T I O N S
 
-#' Filter a data frame by the absolute value of its last column
+#' Filter a data frame by the absolute value of its last column.
 #'
 #' @param df a dataframe.
 #' The last column is supposed to contain numerical values.
@@ -44,7 +46,7 @@ absolute_filter <- function(df, threshold = 1, sign = FALSE) {
   
 }
 
-#' Title
+#' Filter the GOI files used in this project.
 #'
 #' @param df a dataframe 
 #' The last column is supposed to contain numerical values.
@@ -110,6 +112,20 @@ get_associations <- function(df, threshold = 0.8, cor_method = "pearson", sign =
 }
 
 
+#' Sorts a character string and returns it
+#'
+#' @param x a character string.
+#' @param decrease a boolean.
+#' Should the sort be increasing or decreasing?
+#'
+#' @return a character string.
+string_sort <- function(x, decrease = FALSE) {
+  x <- unlist(strsplit(x, split=""))
+  x <- sort(x, decreasing = decrease)
+  x <- paste(x, collapse="")
+  return(x)
+}
+
 ################################################################################
 ################################################################################
 ################################################################################
@@ -145,7 +161,7 @@ get_associations <- function(df, threshold = 0.8, cor_method = "pearson", sign =
     sRNA = srna_genes,
     TF = tf_genes,
     Iron = expr_iron_genes, 
-    Dipyridil = expr_dipy_genes  )
+    Dipyridil = expr_dipy_genes)
   
   upset(fromList(inter_genes_list), 
         sets.bar.color = "#56B4E9", 
@@ -161,19 +177,39 @@ get_associations <- function(df, threshold = 0.8, cor_method = "pearson", sign =
                              tolower(raw_genes_expr$IDENTIFIER) %in% 
                                tolower(inter_genes))
 
-# III. Find the correlation on expression data
+# III. Find the correlations on the expression data
 
   # a. use the identifier as row names
   row.names(inter_genes_expr) = inter_genes_expr$IDENTIFIER
   inter_genes_expr <- inter_genes_expr[-c(1,2)]
   
   # b. compute a list of edges (co-expressing genes)
-  edges <- get_associations(inter_genes_expr)
+  edges_coexpr <- get_associations(inter_genes_expr)
   
   # c. pre-format the data for a use on Cytoscape
-  tmp <- edges[, 3]
-  edges[, 3] = edges[, 2]
-  edges[, 2] = tmp
-  colnames(edges) = NULL
-  write.table(edges, "./network.sif", sep = " ", quote = F, row.names = F)
+  tmp <- edges_coexpr[, 3]
+  edges_coexpr[, 3] = edges_coexpr[, 2]
+  edges_coexpr[, 2] = tmp
+  colnames(edges_coexpr) = c("source", "interaction", "target")
   
+
+# IV. Include the sRNA interaction data
+  
+  # a. load the interaction data 
+  edges_srna <- read.delim("sRNA_interaction.txt", h=T)
+  colnames(edges_srna) <- c("source", "target", "interaction")
+  
+  # b. visualize the edges intersection between the two data sources
+  # each edge is formatted to allow the comparison
+  srna_pairs <- tolower(paste(edges_srna$source, edges_srna$target, sep=""))
+  srna_pairs <- vapply(srna_pairs, string_sort, character(1))
+  coexpr_pairs <- tolower(paste(edges_coexpr$source, edges_coexpr$target, sep=""))
+  coexpr_pairs <- vapply(coexpr_pairs, string_sort, character(1))
+  pairs <- list(srna = srna_pairs, coexpr = coexpr_pairs)
+  ggvenn(pairs)
+  
+  # c. merge the two data frames (coexpression + sRNA interaction)
+  edges <- rbind(edges_coexpr, edges_srna)
+  
+  # export the complete network
+  write.table(edges, "./network.sif", sep = " ", quote = F, row.names = F)
