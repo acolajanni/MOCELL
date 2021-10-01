@@ -12,8 +12,6 @@
 
 library(UpSetR)
 library(reshape2)
-library(stringi)
-library(ggvenn)
 
 
 ### F U N C T I O N S
@@ -112,20 +110,6 @@ get_associations <- function(df, threshold = 0.8, cor_method = "pearson", sign =
 }
 
 
-#' Sorts a character string and returns it
-#'
-#' @param x a character string.
-#' @param decrease a boolean.
-#' Should the sort be increasing or decreasing?
-#'
-#' @return a character string.
-string_sort <- function(x, decrease = FALSE) {
-  x <- unlist(strsplit(x, split=""))
-  x <- sort(x, decreasing = decrease)
-  x <- paste(x, collapse="")
-  return(x)
-}
-
 ################################################################################
 ################################################################################
 ################################################################################
@@ -161,7 +145,7 @@ string_sort <- function(x, decrease = FALSE) {
     sRNA = srna_genes,
     TF = tf_genes,
     Iron = expr_iron_genes, 
-    Dipyridil = expr_dipy_genes)
+    Dipyridyl = expr_dipy_genes)
   
   upset(fromList(inter_genes_list), 
         sets.bar.color = "#56B4E9", 
@@ -190,26 +174,8 @@ string_sort <- function(x, decrease = FALSE) {
   tmp <- edges_coexpr[, 3]
   edges_coexpr[, 3] = edges_coexpr[, 2]
   edges_coexpr[, 2] = tmp
-  colnames(edges_coexpr) = c("source", "interaction", "target")
+  colnames(edges_coexpr) = c("gene1", "interaction", "gene2")
   
-
-# IV. Include the sRNA interaction data
+  # d. export the network file
+  write.table(edges_coexpr, "./network.sif", sep = " ", quote = F, row.names = F)
   
-  # a. load the interaction data 
-  edges_srna <- read.delim("sRNA_interaction.txt", h=T)
-  colnames(edges_srna) <- c("source", "target", "interaction")
-  
-  # b. visualize the edges intersection between the two data sources
-  # each edge is formatted to allow the comparison
-  srna_pairs <- tolower(paste(edges_srna$source, edges_srna$target, sep=""))
-  srna_pairs <- vapply(srna_pairs, string_sort, character(1))
-  coexpr_pairs <- tolower(paste(edges_coexpr$source, edges_coexpr$target, sep=""))
-  coexpr_pairs <- vapply(coexpr_pairs, string_sort, character(1))
-  pairs <- list(srna = srna_pairs, coexpr = coexpr_pairs)
-  ggvenn(pairs)
-  
-  # c. merge the two data frames (coexpression + sRNA interaction)
-  edges <- rbind(edges_coexpr, edges_srna)
-  
-  # export the complete network
-  write.table(edges, "./network.sif", sep = " ", quote = F, row.names = F)
