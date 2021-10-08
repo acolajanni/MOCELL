@@ -2,7 +2,7 @@
 #          E. C O L I   A N T I B I O T I C S   R E S I S T A N C E            #
 #                                                                              #
 # > September 2021                                                             #                                                
-# > Script : projet.R                                                          #                                                        
+# > Script : network_prep.R                                                    #                                                        
 # @ COLAJANNI Antonin                                                          #
 # @ ASLOUDJ Yanis                                                              #
 ################################################################################
@@ -174,7 +174,7 @@ get_associations <- function(df, threshold = 0.8, cor_method = "pearson", sign =
   tmp <- edges_coexpr[, 3]
   edges_coexpr[, 3] = edges_coexpr[, 2]
   edges_coexpr[, 2] = tmp
-  colnames(edges_coexpr) = c("gene1", "interaction", "gene2")
+  colnames(edges_coexpr) <- NULL
   
   # d. export the network file
   write.table(edges_coexpr, "./network.sif", sep = " ", quote = F, row.names = F)
